@@ -11,7 +11,7 @@ user_data = {}
 # === API Endpoint ===
 API_URL = "https://9e82a7cf-97bd-4238-b172-a7870d7aeba6-00-1db4jxtpvh62r.pike.replit.dev/attendance"
 
-# === Flask Server to Keep Replit Alive ===
+# === Flask Server to Keep Render Alive ===
 app = Flask('')
 
 @app.route('/')
@@ -19,10 +19,11 @@ def home():
     return "✅ LNCTU Attendance Bot is running."
 
 def run():
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=10000)  # Port 10000 for Render
 
 def keep_alive():
-    Thread(target=run).start()
+    t = Thread(target=run)
+    t.start()
 
 # === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -87,10 +88,10 @@ async def handle_dot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == "__main__":
     keep_alive()  # Start the Flask server in the background
 
-    # Get your bot token from environment (Replit secrets)
+    # Get your bot token from environment (Render secrets)
     TOKEN = os.environ.get("BOT_TOKEN") or "PASTE-YOUR-TOKEN-HERE"
 
-    # Correct way to initialize bot
+    # Correct method to initialize bot with ApplicationBuilder (no Updater)
     app_bot = ApplicationBuilder().token(TOKEN).build()
 
     # Add handlers for the commands
