@@ -1,7 +1,6 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
-from flask import Flask
-from threading import Thread
+from flask import Flask, request
 import requests
 import os
 
@@ -11,19 +10,19 @@ user_data = {}
 # === API Endpoint ===
 API_URL = "https://9e82a7cf-97bd-4238-b172-a7870d7aeba6-00-1db4jxtpvh62r.pike.replit.dev/attendance"
 
-# === Flask Server to Keep Render Alive ===
-app = Flask('')
+# === Flask Server for Webhook ===
+app = Flask(__name__)
 
 @app.route('/')
 def home():
     return "✅ LNCTU Attendance Bot is running."
 
-def run():
-    app.run(host='0.0.0.0', port=10000)  # Port 10000 for Render
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    json_str = request.get_data(as_text=True)
+    update = Update.de_json(json_str, application.bot)
+    application.process_update(update)
+    return 'OK', 200
 
 # === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -84,21 +83,17 @@ async def handle_dot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ Error:\n{str(e)}")
 
-# === Main Entry Point ===
+# === Main Entry Point for Vercel ===
 if __name__ == "__main__":
-    keep_alive()  # Start the Flask server in the background
-
-    # Get your bot token from environment (Render secrets)
     TOKEN = os.environ.get("BOT_TOKEN") or "PASTE-YOUR-TOKEN-HERE"
+    application = ApplicationBuilder().token(TOKEN).build()
 
-    # Correct method to initialize bot with ApplicationBuilder (no Updater)
-    app_bot = ApplicationBuilder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("set_username", set_username))
+    application.add_handler(CommandHandler("set_password", set_password))
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^\.$'), handle_dot))
 
-    # Add handlers for the commands
-    app_bot.add_handler(CommandHandler("start", start))
-    app_bot.add_handler(CommandHandler("set_username", set_username))
-    app_bot.add_handler(CommandHandler("set_password", set_password))
-    app_bot.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^\.$'), handle_dot))
+    # Set Webhook URL for Telegram
+    application.bot.set_webhook(url=os.environ.get("WEBHOOK_URL"))
 
-    print("✅ Bot running...")
-    app_bot.run_polling()  # Start the bot polling (main thread)
+    app.run(host='0.0.0.0', port=5000)
