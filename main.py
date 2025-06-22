@@ -22,8 +22,7 @@ def run():
     app.run(host='0.0.0.0', port=8080)
 
 def keep_alive():
-    t = Thread(target=run)
-    t.start()
+    Thread(target=run).start()
 
 # === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -91,10 +90,10 @@ if __name__ == "__main__":
     # Get your bot token from environment (Replit secrets)
     TOKEN = os.environ.get("BOT_TOKEN") or "PASTE-YOUR-TOKEN-HERE"
 
-    # Build the Telegram bot
+    # Correct way to initialize bot
     app_bot = ApplicationBuilder().token(TOKEN).build()
 
-    # Add all your handlers
+    # Add handlers for the commands
     app_bot.add_handler(CommandHandler("start", start))
     app_bot.add_handler(CommandHandler("set_username", set_username))
     app_bot.add_handler(CommandHandler("set_password", set_password))
