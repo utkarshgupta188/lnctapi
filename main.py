@@ -94,6 +94,8 @@ if __name__ == "__main__":
     application.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'^\.$'), handle_dot))
 
     # Set Webhook URL for Telegram
-    application.bot.set_webhook(url=os.environ.get("WEBHOOK_URL"))
+    webhook_url = os.environ.get("WEBHOOK_URL") or "https://your-vercel-app-url/webhook"
+    application.bot.set_webhook(url=webhook_url)
 
+    # Run Flask server for webhook handling
     app.run(host='0.0.0.0', port=5000)
